@@ -8,38 +8,58 @@ function Elevator() {
   const [state, setState] = useState({
     target: null,
     currentFloor: 0,
-    activeFloors: new Set([0]),
+    activeFloors: new Set(),
     isNextFloorStop: false,
+    timer: 0,
   });
   useEffect(() => {
-    if (state.target === null && state.activeFloors.size === 0) return;
-    if (state.target === state.currentFloor && state.activeFloors.size === 0)
-      return;
-
-    let target = state.target;
-    if (state.target === null || state.target === state.currentFloor) {
-      const sortedFloors = [...state.activeFloors]
-        .map((f) => [f, Math.abs(f - state.currentFloor)])
-        .sort((a, b) => a[1] - b[1])
-        .map((a) => a[0]);
-      target = sortedFloors[0];
-    }
-
-    const currentFloor =
-      state.currentFloor + Math.sign(target - state.currentFloor);
-    const activeFloors = new Set(state.activeFloors);
-    const isNextFloorStop = activeFloors.delete(currentFloor);
-
     setTimeout(
-      () => {
-        setState({
-          currentFloor,
-          target,
-          activeFloors,
-          isNextFloorStop,
-        });
-      },
-      state.isNextFloorStop ? 2000 : 1000
+      () =>
+        setState((state) => {
+          if (state.target === null && state.activeFloors.size === 0)
+            return state;
+          if (
+            state.target === state.currentFloor &&
+            state.activeFloors.size === 0
+          )
+            return state;
+
+          if (state.isNextFloorStop && state.timer === 0) {
+            return { ...state, timer: 4 };
+          }
+
+          if (state.isNextFloorStop) {
+            const nextTimer = state.timer - 1;
+            return {
+              ...state,
+              timer: nextTimer,
+              isNextFloorStop: nextTimer !== 0,
+            };
+          }
+
+          let target = state.target;
+          if (state.target === null || state.target === state.currentFloor) {
+            const sortedFloors = [...state.activeFloors]
+              .map((f) => [f, Math.abs(f - state.currentFloor)])
+              .sort((a, b) => a[1] - b[1])
+              .map((a) => a[0]);
+            target = sortedFloors[0];
+          }
+
+          const currentFloor =
+            state.currentFloor + Math.sign(target - state.currentFloor);
+          const activeFloors = new Set(state.activeFloors);
+          const isNextFloorStop = activeFloors.delete(currentFloor);
+          return {
+            timer: state.timer,
+            currentFloor,
+            target,
+            activeFloors,
+            isNextFloorStop,
+          };
+        }),
+
+      500
     );
   }, [state]);
 
